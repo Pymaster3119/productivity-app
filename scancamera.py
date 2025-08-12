@@ -2,6 +2,9 @@ import cv2
 import numpy as np
 import urllib.request
 import os
+import menubar
+import sounds
+import time
 
 def download_yolo_model():
     model_files = {
@@ -100,6 +103,33 @@ cap = cv2.VideoCapture(0)
 # Load YOLO model
 yolo_net, class_names = load_yolo_model()
 
+def wait_until_human(cap):
+    # Wait until there is no person (class_id == 0) in the frame
+    while True:
+        ret, frame = cap.read()
+        if not ret or frame is None:
+            time.sleep(0.1)
+            continue
+
+        detection = ai_detect_objects(frame, yolo_net, class_names)
+        if detection is None:
+            return  # no detections, so assume no human
+
+        boxes, confidences, class_ids, indices, classes = detection
+
+        # Check if any detected object is a person (class_id == 0)
+        human_present = False
+        for i in indices:
+            if class_ids[i] == 0:
+                human_present = True
+                break
+
+        # If no human detected, break out
+        if not human_present:
+            return
+
+        time.sleep(0.1)
+
 
 while True:
     ret, frame = cap.read()
@@ -113,4 +143,11 @@ while True:
             print(f"Detected {len(indices) if len(indices) > 0 else 0} objects")
             for index in range(len(indices)):
                 print(f"Object {index}: Class ID = {class_ids[indices[index]]}, Class Name = {classes[class_ids[indices[index]]]}, Confidence = {confidences[indices[index]]:.2f}")
+                if class_ids[indices[index]] == 0:
+                    print("Detected a person!")
+                    cap.release()
+                    menubar.start_focus_timer(duration_minutes=30, update_interval=60, callback=sounds.start_sound)
+                    cap = cv2.VideoCapture(0)
+                    wait_until_human(cap)
+                    sounds.stop_sound()
             print("-"*30)
