@@ -5,11 +5,12 @@ import os
 import menubar
 import sounds
 import time
+from config import config
 
 def download_yolo_model():
     model_files = {
-        'yolov4.weights': 'https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.weights',
-        'yolov4.cfg': 'https://raw.githubusercontent.com/AlexeyAB/darknet/master/cfg/yolov4.cfg',
+        'yolov4-tiny.weights': 'https://github.com/AlexeyAB/darknet/releases/download/yolov4/yolov4-tiny.weights',
+        'yolov4-tiny.cfg': 'https://raw.githubusercontent.com/AlexeyAB/darknet/master/cfg/yolov4-tiny.cfg',
         'coco.names': 'https://raw.githubusercontent.com/AlexeyAB/darknet/master/data/coco.names'
     }
     
@@ -24,7 +25,7 @@ def load_yolo_model():
         return None, None
         
     # Load YOLO
-    net = cv2.dnn.readNet('yolov4.weights', 'yolov4.cfg')
+    net = cv2.dnn.readNet('yolov4-tiny.weights', 'yolov4-tiny.cfg')
     
     # Load classes
     with open('coco.names', 'r') as f:
@@ -38,7 +39,7 @@ def ai_detect_objects(frame, net, classes):
 
     # Input preprocessing
     height, width = frame.shape[:2]
-    blob = cv2.dnn.blobFromImage(frame, 1/255.0, (416, 416), swapRB=True, crop=False)
+    blob = cv2.dnn.blobFromImage(frame, config.scale_factor, (config.input_width, config.input_height), swapRB=True, crop=False)
     net.setInput(blob)
     
     # Get outputs
@@ -59,7 +60,7 @@ def ai_detect_objects(frame, net, classes):
             class_id = np.argmax(scores)
             confidence = scores[class_id]
             
-            if confidence > 0.75:
+            if confidence > config.confidence_threshold:
                 center_x = int(detection[0] * width)
                 center_y = int(detection[1] * height)
                 w = int(detection[2] * width)
@@ -74,7 +75,7 @@ def ai_detect_objects(frame, net, classes):
     
     # Apply non-max suppression
     if len(boxes) > 0:
-        indices = cv2.dnn.NMSBoxes(boxes, confidences, 0.5, 0.4)
+        indices = cv2.dnn.NMSBoxes(boxes, confidences, config.nms_confidence_threshold, config.nms_iou_threshold)
         if len(indices) == 0:
             indices = []
     else:
@@ -113,6 +114,7 @@ def wait_until_human(cap):
 
         detection = ai_detect_objects(frame, yolo_net, class_names)
         if detection is None:
+            print("Case 1")
             return  # no detections, so assume no human
 
         boxes, confidences, class_ids, indices, classes = detection
@@ -126,6 +128,7 @@ def wait_until_human(cap):
 
         # If no human detected, break out
         if not human_present:
+            print("Case 2")
             return
 
         time.sleep(0.1)
@@ -146,7 +149,7 @@ while True:
                 if class_ids[indices[index]] == 0:
                     print("Detected a person!")
                     cap.release()
-                    menubar.start_focus_timer(duration_minutes=30, update_interval=60, callback=sounds.start_sound)
+                    menubar.start_focus_timer(duration_minutes=config.camera_trigger_duration_minutes, update_interval=config.camera_trigger_update_interval, callback=sounds.start_sound)
                     cap = cv2.VideoCapture(0)
                     wait_until_human(cap)
                     sounds.stop_sound()
