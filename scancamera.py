@@ -161,7 +161,7 @@ while True:
                     if class_ids[indices[index]] == 0:
                         print("Detected a person!")
                         cap.release()
-                        menubar.start_focus_timer(duration_minutes=config.camera_trigger_duration_minutes, update_interval=config.camera_trigger_update_interval, callback=sounds.start_sound)
+                        menubar.start_focus_timer(duration_minutes=config.default_duration_minutes, update_interval=config.countdown_update_interval, callback=sounds.start_sound)
                         cap = cv2.VideoCapture(0)
                         wait_until_human(cap)
                         sounds.stop_sound()

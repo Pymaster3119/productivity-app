@@ -20,10 +20,6 @@ class Config:
         return self.config.getint('Timer', 'default_duration_minutes', fallback=30)
     
     @property
-    def camera_trigger_duration_minutes(self):
-        return self.config.getfloat('Timer', 'camera_trigger_duration_minutes', fallback=0.5)
-    
-    @property
     def camera_trigger_update_interval(self):
         return self.config.getint('Timer', 'camera_trigger_update_interval', fallback=1)
     
