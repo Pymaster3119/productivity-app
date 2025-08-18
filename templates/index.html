@@ -147,11 +147,11 @@
     </script>
     <script>
     const diaryEntries = {{ diary_entries|tojson }}; //Ignore errors...
-    const uniqueDates = [...new Set(diaryEntries.map(entry => entry.date))];
+    const uniqueDates = [...new Set(diaryEntries.map(entry => entry.date.substring(0, 10)))];
     const diaryEntriesByDate = uniqueDates.map(date => {
         return {
             date: date,
-            entries: diaryEntries.filter(entry => entry.date === date)
+            entries: diaryEntries.filter(entry => entry.date.substring(0, 10) === date)
         };
     });
     console.log(diaryEntriesByDate);
@@ -164,7 +164,7 @@
                 <ul style="list-style:none; padding:0;">
                     ${element.entries.map(entry => `
                         <li style="margin-bottom: 18px; padding: 15px; background: #f8f9fa; border-radius: 10px; border: 1px solid #e9ecef;">
-                            <div style="font-size:1.1rem; color:#333; margin-bottom:6px;"><b>${entry.date}</b></div>
+                            <div style="font-size:1.1rem; color:#333; margin-bottom:6px;"><b>${entry.date.substring(10,entry.date.length)}</b></div>
                             <div style="color:#555;">${entry.text}</div>
                         </li>
                     `).join('')}
