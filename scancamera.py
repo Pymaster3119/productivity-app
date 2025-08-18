@@ -116,8 +116,8 @@ cap = cv2.VideoCapture(0)
 yolo_net, class_names = load_yolo_model()
 
 
-def start_break(cap, timerlength):
-    menubar.break_notification_start(duration_minutes=timerlength, update_interval=config.countdown_update_interval)
+def start_break(cap, timerlength, update_interval):
+    menubar.break_notification_start(duration_minutes=timerlength, update_interval=update_interval)
     soundRunning = False
     timer = 0
     while timer < timerlength * 60:
@@ -149,8 +149,8 @@ def start_break(cap, timerlength):
                 sounds.stop_sound()
 
         time.sleep(0.1)
-        print(timer)
-        #menubar.break_notification_interim(timer, duration_minutes=timerlength, update_interval=config.countdown_update_interval)
+        if timer % update_interval < 0.1:
+            menubar.break_notification_interim(timer, duration_minutes=timerlength, update_interval=config.countdown_update_interval)
 
 while True:
     ret, frame = cap.read()
@@ -171,7 +171,7 @@ while True:
                         menubar.start_focus_timer(duration_minutes=config.default_duration_minutes, update_interval=config.countdown_update_interval, callback=sounds.start_sound)
                         cap = cv2.VideoCapture(0)
                         sounds.stop_sound()
-                        start_break(cap, config.default_break_minutes)
+                        start_break(cap, config.default_break_minutes, config.countdown_update_interval)
                 print("-"*30)
         except Exception as e:
             print(f"Error in object detection: {e}")
