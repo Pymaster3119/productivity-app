@@ -2,13 +2,20 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 import os
 import configparser
 from config import config
+import diary_database
+from flask import send_from_directory
 
 app = Flask(__name__)
 
 @app.route('/')
 def index():
-    """Serve the index.html file with current config values"""
-    return render_template('index.html', config=config)
+    """Serve the index.html file with current config values and diary entries"""
+    # Fetch diary entries from the database
+    try:
+        entries = diary_database.get_all_entries()  # Should return a list of dicts with 'date' and 'text'
+    except Exception:
+        entries = []
+    return render_template('index.html', config=config, diary_entries=entries)
 
 @app.route('/update-config', methods=['POST'])
 def update_config():
@@ -44,11 +51,22 @@ def update_config():
             config_parser.write(f)
         config.load_config()
         
-        return render_template('index.html', config=config, message="Configuration updated successfully!", message_type="success")
-        
+        # After update, also show diary entries
+        try:
+            entries = diary_database.get_all_entries()
+        except Exception:
+            entries = []
+        return render_template('index.html', config=config, diary_entries=entries, message="Configuration updated successfully!", message_type="success")
     except Exception as e:
-        return render_template('index.html', config=config, message=f"Error updating configuration: {str(e)}", message_type="error")
+        try:
+            entries = diary_database.get_all_entries()
+        except Exception:
+            entries = []
+        return render_template('index.html', config=config, diary_entries=entries, message=f"Error updating configuration: {str(e)}", message_type="error")
 
+@app.route('/static/styles.css')
+def serve_static_css():
+    return send_from_directory('templates', 'styles.css')
 if __name__ == '__main__':
     # Run the Flask development server
     app.run(debug=True, host='127.0.0.1', port=5000)

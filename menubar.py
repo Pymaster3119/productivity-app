@@ -4,6 +4,7 @@ import math
 import subprocess
 import sounds
 from config import config
+import diary_database
 
 # constant group identifier for timer notifications to replace previous alerts
 TIMER_GROUP = "workify.timer"
@@ -47,4 +48,4 @@ def start_focus_timer(duration_minutes=None, update_interval=None, callback = No
     Notifier.notify(f"{duration_minutes}-minute session finished!", title="Workify", group=TIMER_GROUP)
     entry = ask_diary_entry()
     if entry:
-        print(entry)
+        diary_database.add_diary_entry(entry)

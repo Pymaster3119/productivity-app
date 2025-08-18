@@ -168,4 +168,4 @@ while True:
                 print("-"*30)
         except Exception as e:
             print(f"Error in object detection: {e}")
-            time.sleep(0.1)  # Small delay to prevent rapid error loops
+    time.sleep(0.1)  # Small delay to prevent rapid error loops

@@ -8,7 +8,6 @@ class Config:
         self.load_config()
     
     def load_config(self):
-        """Load configuration from file"""
         if os.path.exists(self.config_file):
             self.config.read(self.config_file)
         else:
@@ -17,7 +16,7 @@ class Config:
     # Timer settings
     @property
     def default_duration_minutes(self):
-        return self.config.getint('Timer', 'default_duration_minutes', fallback=30)
+        return self.config.getfloat('Timer', 'default_duration_minutes', fallback=30)
     
     @property
     def camera_trigger_update_interval(self):
