@@ -49,3 +49,20 @@ def start_focus_timer(duration_minutes=None, update_interval=None, callback = No
     entry = ask_diary_entry()
     if entry:
         diary_database.add_diary_entry(entry)
+
+def break_notification_start(duration_minutes=None, update_interval=None, callback=None):
+    if duration_minutes is None:
+        duration_minutes = config.default_break_minutes
+    if update_interval is None:
+        update_interval = config.countdown_update_interval
+
+    Notifier.notify(f"Starting {duration_minutes}-minute break", title="Workify", group=TIMER_GROUP)
+
+def break_notification_interim(total_seconds, duration_minutes=None, update_interval=None, callback=None):
+    if duration_minutes is None:
+        duration_minutes = config.default_break_minutes
+    if update_interval is None:
+        update_interval = config.countdown_update_interval
+
+    mins, secs = divmod(math.ceil(total_seconds), 60)
+    Notifier.notify(f"{mins:02d}:{secs:02d} remaining in break", title="Workify", group=TIMER_GROUP)

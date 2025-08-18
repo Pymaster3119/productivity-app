@@ -9,8 +9,8 @@ from config import config
 
 def download_yolo_model():
     model_files = {
-        'yolov4-tiny.weights': 'https://github.com/AlexeyAB/darknet/releases/download/yolov4/yolov4-tiny.weights',
-        'yolov4-tiny.cfg': 'https://raw.githubusercontent.com/AlexeyAB/darknet/master/cfg/yolov4-tiny.cfg',
+        'yolov4.weights': 'https://github.com/AlexeyAB/darknet/releases/download/yolov4/yolov4.weights',
+        'yolov4.cfg': 'https://raw.githubusercontent.com/AlexeyAB/darknet/master/cfg/yolov4.cfg',
         'coco.names': 'https://raw.githubusercontent.com/AlexeyAB/darknet/master/data/coco.names'
     }
     
@@ -25,7 +25,7 @@ def load_yolo_model():
         return None, None
         
     # Load YOLO
-    net = cv2.dnn.readNet('yolov4-tiny.weights', 'yolov4-tiny.cfg')
+    net = cv2.dnn.readNet('yolov4.weights', 'yolov4.cfg')
     
     # Load classes
     with open('coco.names', 'r') as f:
@@ -115,9 +115,12 @@ cap = cv2.VideoCapture(0)
 # Load YOLO model
 yolo_net, class_names = load_yolo_model()
 
-def wait_until_human(cap):
-    # Wait until there is no person (class_id == 0) in the frame
-    while True:
+
+def start_break(cap, timerlength):
+    menubar.break_notification_start(duration_minutes=timerlength, update_interval=config.countdown_update_interval)
+    soundRunning = False
+    timer = 0
+    while timer < timerlength * 60:
         ret, frame = cap.read()
         if not ret or frame is None:
             time.sleep(0.1)
@@ -126,24 +129,28 @@ def wait_until_human(cap):
         detection = ai_detect_objects(frame, yolo_net, class_names)
         if detection is None:
             print("Case 1")
-            return  # no detections, so assume no human
+            timer += 0.1
+            if soundRunning:
+                sounds.stop_sound()
 
         boxes, confidences, class_ids, indices, classes = detection
 
-        # Check if any detected object is a person (class_id == 0)
         human_present = False
         for i in indices:
             if class_ids[i] == 0:
                 human_present = True
-                break
+                if not soundRunning:
+                    sounds.start_sound()
+                    soundRunning = True
 
-        # If no human detected, break out
         if not human_present:
-            print("Case 2")
-            return
+            timer += 0.1
+            if soundRunning:
+                sounds.stop_sound()
 
         time.sleep(0.1)
-
+        print(timer)
+        #menubar.break_notification_interim(timer, duration_minutes=timerlength, update_interval=config.countdown_update_interval)
 
 while True:
     ret, frame = cap.read()
@@ -163,8 +170,8 @@ while True:
                         cap.release()
                         menubar.start_focus_timer(duration_minutes=config.default_duration_minutes, update_interval=config.countdown_update_interval, callback=sounds.start_sound)
                         cap = cv2.VideoCapture(0)
-                        wait_until_human(cap)
                         sounds.stop_sound()
+                        start_break(cap, config.default_break_minutes)
                 print("-"*30)
         except Exception as e:
             print(f"Error in object detection: {e}")
