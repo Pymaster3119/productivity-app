@@ -1,11 +1,17 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 import os
 import configparser
 from config import config
 import diary_database
 from flask import send_from_directory
+import focus_stats
 
 app = Flask(__name__)
+
+@app.route('/api/focus_stats')
+def api_focus_stats():
+    stats = focus_stats.get_stats()
+    return jsonify(stats)
 
 @app.route('/')
 def index():

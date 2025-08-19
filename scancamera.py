@@ -6,6 +6,7 @@ import menubar
 import sounds
 import time
 from config import config
+import focus_stats
 
 def download_yolo_model():
     model_files = {
@@ -167,11 +168,13 @@ while True:
                     print(f"Object {index}: Class ID = {class_ids[indices[index]]}, Class Name = {classes[class_ids[indices[index]]]}, Confidence = {confidences[indices[index]]:.2f}")
                     if class_ids[indices[index]] == 0:
                         print("Detected a person!")
+                        focus_stats.add_focus_time(config.default_duration_minutes * 60)
                         cap.release()
                         menubar.start_focus_timer(duration_minutes=config.default_duration_minutes, update_interval=config.countdown_update_interval, callback=sounds.start_sound)
                         cap = cv2.VideoCapture(0)
                         sounds.stop_sound()
                         start_break(cap, config.default_break_minutes, config.countdown_update_interval)
+                        focus_stats.add_break_time(config.default_break_minutes * 60)
                 print("-"*30)
         except Exception as e:
             print(f"Error in object detection: {e}")

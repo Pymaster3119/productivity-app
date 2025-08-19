@@ -16,6 +16,7 @@
         <div style="background: #f1f3f6; border-bottom: 1px solid #e9ecef; display: flex;">
             <button class="tab-btn" id="configTabBtn" onclick="showTab('config')">Configuration</button>
             <button class="tab-btn" id="diaryTabBtn" onclick="showTab('diary')">Diary Entries</button>
+            <button class="tab-btn" id="calendarTabBtn" onclick="showTab('calendar')">Statistics</button>
         </div>
         <div class="content">
             {% if message %}
@@ -28,7 +29,7 @@
                 <form method="POST" action="/update-config" class="config-form">
                     <!-- Timer Settings -->
                     <div class="section">
-                        <h2 class="section-title">⏱️ Timer Settings</h2>
+                                <h2 class="section-title">Timer Settings</h2>
                         <div class="form-group">
                             <label for="default_duration_minutes">Default Session Duration (minutes)</label>
                             <div>
@@ -40,7 +41,7 @@
                     </div>
                     <!-- AI Detection Settings -->
                     <div class="section">
-                        <h2 class="section-title">🤖 AI Detection Settings</h2>
+                        <h2 class="section-title">AI Detection Settings</h2>
                         <div class="form-group">
                             <label for="confidence_threshold">Confidence Threshold</label>
                             <div>
@@ -84,7 +85,7 @@
                     </div>
                     <!-- Audio Settings -->
                     <div class="section">
-                        <h2 class="section-title">🔊 Audio Settings</h2>
+                        <h2 class="section-title">Audio Settings</h2>
                         <div class="form-group">
                             <label for="alarm_sound_file">Alarm Sound File</label>
                             <div>
@@ -96,7 +97,7 @@
                     </div>
                     <!-- Notification Settings -->
                     <div class="section">
-                        <h2 class="section-title">📱 Notification Settings</h2>
+                        <h2 class="section-title">Notification Settings</h2>
                         <div class="form-group">
                             <label for="show_countdown">Show Countdown Timer</label>
                             <div class="checkbox-group">
@@ -133,6 +134,26 @@
                     
                 </div>
             </div>
+            <!-- Statistics Tab -->
+            <div id="calendarTab" class="tab-content" style="display:none;">
+                <div class="section" id="calendar-view">
+                        <h2 class="section-title">Calendar Activity</h2>
+                        <div id="calendar-heatmap"></div>
+                        <div style="margin-top:10px; color:#888; font-size:0.95rem;">Darker squares = more diary entries that day</div>
+                </div>
+                <div class="section" id="calendar-stats">
+                    <h2 class="section-title">Statistics</h2>
+                    <div class="stat-row">
+                        <div><b>Total Focus Time:</b> {{ total_focus_minutes }} minutes</div>
+                    </div>
+                    <div class="stat-row">
+                        <div><b>Total Break Time:</b> {{ total_break_minutes }} minutes</div>
+                    </div>
+                    <div class="stat-row">
+                        <div><b>Number of Diary Entries:</b> {{ diary_entries|length }}</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
     <script>
@@ -140,13 +161,90 @@
         function showTab(tab) {
             document.getElementById('configTab').style.display = (tab === 'config') ? '' : 'none';
             document.getElementById('diaryTab').style.display = (tab === 'diary') ? '' : 'none';
+            document.getElementById('calendarTab').style.display = (tab === 'calendar') ? '' : 'none';
             document.getElementById('configTabBtn').style.background = (tab === 'config') ? '#fff' : '';
             document.getElementById('diaryTabBtn').style.background = (tab === 'diary') ? '#fff' : '';
+            document.getElementById('calendarTabBtn').style.background = (tab === 'calendar') ? '#fff' : '';
         }
         showTab('config');
     </script>
+        <script>
+        // Github thingy
+        const diaryEntries = {{ diary_entries|tojson }};
+        const entryCountByDay = {};
+        diaryEntries.forEach(entry => {
+            const day = entry.date.substring(0, 10);
+            entryCountByDay[day] = (entryCountByDay[day] || 0) + 1;
+        });
+
+        function getLastNDates(n) {
+            const dates = [];
+            const today = new Date();
+            for (let i = n - 1; i >= 0; i--) {
+                const d = new Date(today);
+                d.setDate(today.getDate() - i);
+                const dateStr = d.toISOString().slice(0, 10);
+                dates.push(dateStr);
+            }
+            return dates;
+        }
+
+        function colorGradient (colorMin, colorMax, interp) {
+            const r = Math.round(colorMin[0] + interp * (colorMax[0] - colorMin[0]));
+            const g = Math.round(colorMin[1] + interp * (colorMax[1] - colorMin[1]));
+            const b = Math.round(colorMin[2] + interp * (colorMax[2] - colorMin[2]));
+            return `rgb(${r}, ${g}, ${b})`;
+        }
+
+        function renderCalendarHeatmap() {
+            const columns = 40;
+            const rows = 12;
+            const container = document.getElementById('calendar-heatmap');
+            container.innerHTML = '';
+            const allDates = getLastNDates(columns * rows);
+
+            //Calculate the maximum
+            let maxcount = 0;
+            for (let row=0; row < rows; row++) {
+                for (let col=0; col < columns; col++) {
+                    const idx = col * rows + row;
+                    if (idx >= allDates.length) break;
+                    const dateStr = allDates[idx];
+                    const count = entryCountByDay[dateStr] || 0;
+                    if (count > maxcount) maxcount = count;
+                }
+            }
+            
+            //Draw it
+            for (let row = 0; row < rows; row++) {
+                const rowDiv = document.createElement('div');
+                rowDiv.style.display = 'flex';
+                rowDiv.style.alignItems = 'center';
+                rowDiv.style.marginBottom = '2px';
+                for (let col = 0; col < columns; col++) {
+                    const idx = col * rows + row;
+                    if (idx >= allDates.length) break;
+                    const dateStr = allDates[idx];
+                    const count = entryCountByDay[dateStr] || 0;
+                    color = colorGradient([233,236,239], [0,0,0], count / maxcount);
+                    const square = document.createElement('div');
+                    square.title = `${dateStr}: ${count} entr${count === 1 ? 'y' : 'ies'}`;
+                    square.style.width = '18px';
+                    square.style.height = '18px';
+                    square.style.margin = '0 1px';
+                    square.style.background = color;
+                    square.style.borderRadius = '3px';
+                    square.style.border = '1px solid #e9ecef';
+                    rowDiv.appendChild(square);
+                }
+                container.appendChild(rowDiv);
+            }
+        }
+        document.getElementById('calendarTabBtn').addEventListener('click', renderCalendarHeatmap);
+        </script>
     <script>
-    const diaryEntries = {{ diary_entries|tojson }}; //Ignore errors...
+
+    // Diary Entries Tab rendering
     const uniqueDates = [...new Set(diaryEntries.map(entry => entry.date.substring(0, 10)))];
     const diaryEntriesByDate = uniqueDates.map(date => {
         return {
@@ -154,10 +252,8 @@
             entries: diaryEntries.filter(entry => entry.date.substring(0, 10) === date)
         };
     });
-    console.log(diaryEntriesByDate);
     const diariesContainer = document.getElementById('diaries');
     diaryEntriesByDate.forEach(element => {
-
         diariesContainer.innerHTML += `
             <h2 class="section-title">${element.date}</h2>
             ${element.entries.length > 0 ? `
@@ -171,7 +267,6 @@
                 </ul>
             ` : '<div style="color:#888; font-style:italic;">No diary entries found.</div>'}
         `;
-        
     });
 </script>
 </body>
