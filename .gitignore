@@ -3,3 +3,4 @@ yolov4.cfg
 coco.names
 yolov4-tiny.weights
 yolov4-tiny.cfg
+appsetings.cfg
