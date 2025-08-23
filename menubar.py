@@ -9,7 +9,7 @@ import diary_database
 import speech_recognition as sr
 
 # constant group identifier for timer notifications to replace previous alerts
-TIMER_GROUP = "workify.timer"
+TIMER_GROUP = "breakify.timer"
 
 def countdown_timer(duration_minutes=None, update_interval=None):
     if duration_minutes is None:
@@ -21,7 +21,7 @@ def countdown_timer(duration_minutes=None, update_interval=None):
     while total_seconds > 0:
         mins, secs = divmod(math.ceil(total_seconds), 60)
         if config.show_countdown:
-            Notifier.notify(f"{mins:02d}:{secs:02d} remaining", title="Workify", group=TIMER_GROUP)
+            Notifier.notify(f"{mins:02d}:{secs:02d} remaining", title="Breakify", group=TIMER_GROUP)
         sleep_time = min(update_interval, total_seconds)
         time.sleep(sleep_time)
         total_seconds -= sleep_time
@@ -31,7 +31,7 @@ def ask_diary_entry():
         return None
         
     script = ('display dialog "Please write what you accomplished in this session:\n\n(Click Speak to use speech-to-text)" '
-              'default answer "" with title "Workify Log" buttons {"Cancel", "Speak", "OK"} default button "OK"')
+              'default answer "" with title "Breakify Log" buttons {"Cancel", "Speak", "OK"} default button "OK"')
     osa = subprocess.run(["osascript", "-e", script], capture_output=True, text=True)
     if osa.returncode == 0:
         output = osa.stdout
@@ -69,10 +69,10 @@ def start_focus_timer(duration_minutes=None, update_interval=None, callback = No
     if update_interval is None:
         update_interval = config.camera_trigger_update_interval
         
-    Notifier.notify(f"Starting {duration_minutes}-minute focus session", title="Workify", group=TIMER_GROUP)
+    Notifier.notify(f"Starting {duration_minutes}-minute focus session", title="Breakify", group=TIMER_GROUP)
     countdown_timer(duration_minutes=duration_minutes, update_interval=update_interval)
     callback()
-    Notifier.notify(f"{duration_minutes}-minute session finished!", title="Workify", group=TIMER_GROUP)
+    Notifier.notify(f"{duration_minutes}-minute session finished!", title="Breakify", group=TIMER_GROUP)
     entry = ask_diary_entry()
     if entry:
         diary_database.add_diary_entry(entry)
@@ -83,7 +83,7 @@ def break_notification_start(duration_minutes=None, update_interval=None, callba
     if update_interval is None:
         update_interval = config.countdown_update_interval
 
-    Notifier.notify(f"Starting {duration_minutes}-minute break", title="Workify", group=TIMER_GROUP)
+    Notifier.notify(f"Starting {duration_minutes}-minute break", title="Breakify", group=TIMER_GROUP)
 
 def break_notification_interim(total_seconds, duration_minutes=None, update_interval=None, callback=None):
     if duration_minutes is None:
@@ -92,7 +92,7 @@ def break_notification_interim(total_seconds, duration_minutes=None, update_inte
         update_interval = config.countdown_update_interval
 
     mins, secs = divmod(math.ceil(duration_minutes - total_seconds), 60)
-    Notifier.notify(f"{mins:02d}:{secs:02d} remaining in break", title="Workify", group=TIMER_GROUP)
+    Notifier.notify(f"{mins:02d}:{secs:02d} remaining in break", title="Breakify", group=TIMER_GROUP)
 
 if __name__ == "__main__":
     ask_diary_entry()
