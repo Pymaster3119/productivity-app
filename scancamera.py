@@ -7,6 +7,7 @@ import sounds
 import time
 from config import config
 import focus_stats
+import ClickupIntegration
 
 def download_yolo_model():
     model_files = {

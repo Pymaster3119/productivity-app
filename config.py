@@ -68,10 +68,6 @@ class Config:
     @property
     def ask_diary_entry(self):
         return self.config.getboolean('Notifications', 'ask_diary_entry', fallback=True)
-    
-    @property
-    def clickup_token(self):
-        return self.config.get('Clickup', 'token', fallback=None)
 
 # Create a global config instance
 config = Config()
